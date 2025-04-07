@@ -1,0 +1,24 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  
+  h1 {
+    text-align: center;
+  }
+  
+  #container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  
+  #map, #barChart {
+    width: 48%;
+    height: 500px;
+  }
+  
+  select {
+    margin-left: 10px;
+  }
+  

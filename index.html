@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapping Digital Europe: Internet Freedom & Infrastructure</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+</head>
+<body>
+  <h1>Mapping Digital Europe: Internet Freedom & Infrastructure</h1>
+  <p>Explore the digital landscape across Europe by examining various metrics related to internet freedom and infrastructure.</p>
+  
+  <!-- Dropdown for selecting the attribute to visualize -->
+  <label for="attributeSelect">Choose a metric:</label>
+  <select id="attributeSelect">
+    <option value="freedom_score">Internet Freedom Score</option>
+    <option value="broadband_coverage">Broadband Coverage (%)</option>
+    <option value="internet_speed">Average Internet Speed (Mbps)</option>
+    <option value="internet_cost_pct_income">Internet Cost as % of Income</option>
+    <option value="social_media_penetration">Social Media Penetration Rate (%)</option>
+  </select>
+
+  <!-- Container for the map and bar chart -->
+  <div id="container">
+    <div id="map"></div>
+    <div id="barChart"></div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
