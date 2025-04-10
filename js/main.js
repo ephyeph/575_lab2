@@ -1,13 +1,10 @@
-// Wrap entire script in a self-executing function
 (function(){
 
-    // Pseudo-global variables
     var attrArray = ["broadband", "speed", "freedom", "cost", "social"];
     var expressed = attrArray[0];
     
     window.onload = setMap;
     
-    // Main function to initiate the map
     function setMap(){
         var width = window.innerWidth * 0.5,
             height = 500;
@@ -28,35 +25,31 @@
         var path = d3.geoPath().projection(projection);
     
         var promises = [
-            d3.csv("data/europeInternetData.csv"),
+            d3.csv("data/internetData.csv"),
             d3.json("data/europe.topojson")
         ];
     
-        Promise.all(promises).then(callback);
-    
-        // Callback to process data once loaded
-        function callback(data){
+        Promise.all(promises).then(function(data) {
             var csvData = data[0],
                 europe = data[1];
     
-            // Convert TopoJSON to GeoJSON
             var geojsonData = topojson.feature(europe, europe.objects.europe).features;
+            joinData(geojsonData, csvData);
             var colorScale = makeColorScale(csvData);
     
-            geojsonData = joinData(geojsonData, csvData);
             drawMap(geojsonData, map, path, colorScale);
             setChart(csvData, colorScale);
             createDropdown(csvData);
-        }
+            drawLegend(colorScale);
+        });
     }
     
-    // Join CSV data to GeoJSON features
     function joinData(geojsonData, csvData){
-        for (var i = 0; i < csvData.length; i++){
+        for (let i = 0; i < csvData.length; i++){
             var csvCountry = csvData[i],
                 csvKey = csvCountry.id;
     
-            for (var j = 0; j < geojsonData.length; j++){
+            for (let j = 0; j < geojsonData.length; j++){
                 var geoProps = geojsonData[j].properties,
                     geoKey = geoProps.id;
     
@@ -67,10 +60,8 @@
                 }
             }
         }
-        return geojsonData;
     }
     
-    // Create color scale based on selected attribute
     function makeColorScale(data){
         var colorClasses = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"];
         var colorScale = d3.scaleQuantile().range(colorClasses);
@@ -79,9 +70,8 @@
         return colorScale;
     }
     
-    // Draw countries on the map
     function drawMap(geojsonData, map, path, colorScale){
-        var countries = map.selectAll(".country")
+        map.selectAll(".country")
             .data(geojsonData)
             .enter()
             .append("path")
@@ -95,15 +85,7 @@
             .on("mouseout", dehighlight);
     }
     
-    // Create the bar chart
     function setChart(data, colorScale){
-        
-        //test
-        console.log("Currently expressed:", expressed);
-            data.forEach(d => {
-                console.log(d.id, d[expressed], parseFloat(d[expressed]));
-            });
-
         var chartWidth = window.innerWidth * 0.425,
             chartHeight = 500,
             padding = 25,
@@ -116,12 +98,11 @@
             .attr("width", chartWidth)
             .attr("height", chartHeight);
     
-        // Title above the chart
         chart.append("text")
             .attr("class", "chartTitle")
             .attr("x", padding)
             .attr("y", 30)
-            .text("Internet " + expressed.charAt(0).toUpperCase() + expressed.slice(1) + " by Country");
+            .text("Internet " + capitalize(expressed) + " by Country");
     
         var yScale = d3.scaleLinear()
             .range([innerHeight, 0])
@@ -141,74 +122,27 @@
             .on("mouseover", highlight)
             .on("mouseout", dehighlight);
     
-        // Add vertical axis to the chart
+        var xLabels = data.map(d => d.id);
+        var xScale = d3.scaleBand()
+            .domain(xLabels)
+            .range([0, innerWidth]);
+    
+        chart.append("g")
+            .attr("class", "x axis")
+            .attr("transform", `translate(${padding}, ${chartHeight - padding})`)
+            .call(d3.axisBottom(xScale))
+            .selectAll("text")
+            .style("text-anchor", "end")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.15em")
+            .attr("transform", "rotate(-45)");
+    
         chart.append("g")
             .attr("class", "axis")
             .attr("transform", `translate(${padding}, ${padding})`)
             .call(d3.axisLeft(yScale));
-
-            // Create x-axis scale
-        var xScale = d3.scaleBand()
-            .domain(data.map(d => d.id))  // Or use d.name if you prefer full names
-            .range([padding, chartWidth - padding])
-            .padding(0.1);
-
-            // Create x-axis
-        var xAxis = d3.axisBottom()
-            .scale(xScale);
-
-        // Append x-axis to chart
-            chart.append("g")
-            .attr("class", "axis x-axis")
-            .attr("transform", `translate(0, ${chartHeight - padding})`)
-            .call(xAxis)
-            .selectAll("text")
-            .attr("transform", "rotate(-45)")  // Optional: tilt labels
-            .style("text-anchor", "end");
-
-
-            // Create legend container
-        var legend = chart.append("g")
-            .attr("class", "legend")
-            .attr("transform", `translate(${chartWidth - 150}, 40)`); // Position legend
-
-            // Legend title
-            legend.append("text")
-            .attr("class", "legendTitle")
-            .text("Higher Value → Darker Color");
-
-            // Create legend color boxes
-        var colorClasses = colorScale.range();
-
-            colorClasses.forEach((color, i) => {
-            legend.append("rect")
-                .attr("x", 0)
-                .attr("y", i * 20)
-                .attr("width", 20)
-                .attr("height", 20)
-                .style("fill", color);
-            });
-
-
     }
     
-    // Highlight function for interaction
-    function highlight(event, d){
-        var id = d.id || d.properties.id;
-        d3.selectAll("." + id)
-            .style("stroke", "#000")
-            .style("stroke-width", "2px");
-    }
-    
-    // Remove highlight
-    function dehighlight(event, d){
-        var id = d.id || d.properties.id;
-        d3.selectAll("." + id)
-            .style("stroke", null)
-            .style("stroke-width", null);
-    }
-    
-    // Create dropdown for attribute switching
     function createDropdown(data){
         var dropdown = d3.select("body")
             .append("select")
@@ -223,14 +157,20 @@
             .enter()
             .append("option")
             .attr("value", d => d)
-            .text(d => d.charAt(0).toUpperCase() + d.slice(1));
+            .text(d => capitalize(d));
     }
     
-    // Update map and chart when attribute is changed
-    function updateVisuals(data) {
+    function updateVisuals(data){
         var colorScale = makeColorScale(data);
     
-        // Update bar heights and colors
+        d3.selectAll(".country")
+            .transition()
+            .duration(1000)
+            .style("fill", d => {
+                var val = d.properties[expressed];
+                return val ? colorScale(val) : "#ccc";
+            });
+    
         var yScale = d3.scaleLinear()
             .range([450, 0])
             .domain([0, d3.max(data, d => parseFloat(d[expressed])) * 1.1]);
@@ -243,20 +183,77 @@
             .attr("height", d => 450 - yScale(d[expressed]))
             .style("fill", d => colorScale(d[expressed]));
     
-        // Update map colors
-        d3.selectAll(".country")
-            .transition()
-            .duration(1000)
-            .style("fill", function(d) {
-                var val = d.properties[expressed];
-                return val ? colorScale(val) : "#ccc";
-            });
-    
-        // Update chart title
         d3.select(".chartTitle")
-            .text("Internet " + expressed.charAt(0).toUpperCase() + expressed.slice(1) + " by Country");
+            .text("Internet " + capitalize(expressed) + " by Country");
+    
+        d3.select(".legend").remove(); // Remove old legend
+        drawLegend(colorScale);
     }
     
+    function highlight(event, d){
+        var id = d.id || d.properties.id;
+        d3.selectAll("." + id)
+            .style("stroke", "#000")
+            .style("stroke-width", "2px");
+    }
+    
+    function dehighlight(event, d){
+        var id = d.id || d.properties.id;
+        d3.selectAll("." + id)
+            .style("stroke", null)
+            .style("stroke-width", null);
+    }
+    
+    function capitalize(str){
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    function drawLegend(colorScale){
+        var legendWidth = 150,
+            legendHeight = 50;
+    
+        var legend = d3.select("body")
+            .append("svg")
+            .attr("class", "legend")
+            .attr("width", legendWidth)
+            .attr("height", legendHeight)
+            .style("position", "absolute")
+            .style("top", "20px")
+            .style("right", "30px");
+    
+        legend.append("text")
+            .attr("x", 0)
+            .attr("y", 15)
+            .attr("class", "legendTitle")
+            .style("font-weight", "bold")
+            .text("Legend");
+    
+        var colors = colorScale.range();
+    
+        legend.append("rect")
+            .attr("x", 10)
+            .attr("y", 25)
+            .attr("width", 30)
+            .attr("height", 15)
+            .style("fill", colors[colors.length - 1]);
+    
+        legend.append("text")
+            .attr("x", 45)
+            .attr("y", 37)
+            .text("High");
+    
+        legend.append("rect")
+            .attr("x", 90)
+            .attr("y", 25)
+            .attr("width", 30)
+            .attr("height", 15)
+            .style("fill", colors[0]);
+    
+        legend.append("text")
+            .attr("x", 125)
+            .attr("y", 37)
+            .text("Low");
+    }
     
     })();
     
