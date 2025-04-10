@@ -146,6 +146,26 @@
             .attr("class", "axis")
             .attr("transform", `translate(${padding}, ${padding})`)
             .call(d3.axisLeft(yScale));
+
+            // Create x-axis scale
+        var xScale = d3.scaleBand()
+            .domain(data.map(d => d.id))  // Or use d.name if you prefer full names
+            .range([padding, chartWidth - padding])
+            .padding(0.1);
+
+            // Create x-axis
+        var xAxis = d3.axisBottom()
+            .scale(xScale);
+
+        // Append x-axis to chart
+            chart.append("g")
+            .attr("class", "axis x-axis")
+            .attr("transform", `translate(0, ${chartHeight - padding})`)
+            .call(xAxis)
+            .selectAll("text")
+            .attr("transform", "rotate(-45)")  // Optional: tilt labels
+            .style("text-anchor", "end");
+
     }
     
     // Highlight function for interaction
