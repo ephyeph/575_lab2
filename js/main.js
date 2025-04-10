@@ -25,7 +25,7 @@
         var path = d3.geoPath().projection(projection);
     
         var promises = [
-            d3.csv("data/internetData.csv"),
+            d3.csv("data/europeinternetData.csv"),
             d3.json("data/europe.topojson")
         ];
     
