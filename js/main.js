@@ -227,17 +227,10 @@
     }
     
     // Update map and chart when attribute is changed
-    function updateVisuals(data){
+    function updateVisuals(data) {
         var colorScale = makeColorScale(data);
     
-        d3.selectAll(".country")
-            .transition()
-            .duration(1000)
-            .style("fill", d => {
-                var val = d.properties[expressed];
-                return val ? colorScale(val) : "#ccc";
-            });
-    
+        // Update bar heights and colors
         var yScale = d3.scaleLinear()
             .range([450, 0])
             .domain([0, d3.max(data, d => parseFloat(d[expressed])) * 1.1]);
@@ -250,9 +243,20 @@
             .attr("height", d => 450 - yScale(d[expressed]))
             .style("fill", d => colorScale(d[expressed]));
     
+        // Update map colors
+        d3.selectAll(".country")
+            .transition()
+            .duration(1000)
+            .style("fill", function(d) {
+                var val = d.properties[expressed];
+                return val ? colorScale(val) : "#ccc";
+            });
+    
+        // Update chart title
         d3.select(".chartTitle")
             .text("Internet " + expressed.charAt(0).toUpperCase() + expressed.slice(1) + " by Country");
     }
+    
     
     })();
     
