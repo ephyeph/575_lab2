@@ -166,6 +166,30 @@
             .attr("transform", "rotate(-45)")  // Optional: tilt labels
             .style("text-anchor", "end");
 
+
+            // Create legend container
+        var legend = chart.append("g")
+            .attr("class", "legend")
+            .attr("transform", `translate(${chartWidth - 150}, 40)`); // Position legend
+
+            // Legend title
+            legend.append("text")
+            .attr("class", "legendTitle")
+            .text("Higher Value → Darker Color");
+
+            // Create legend color boxes
+        var colorClasses = colorScale.range();
+
+            colorClasses.forEach((color, i) => {
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", i * 20)
+                .attr("width", 20)
+                .attr("height", 20)
+                .style("fill", color);
+            });
+
+
     }
     
     // Highlight function for interaction

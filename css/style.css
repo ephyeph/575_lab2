@@ -21,4 +21,19 @@ body {
   select {
     margin-left: 10px;
   }
-  
+
+  .axis text {
+    font-size: 10px;
+    font-family: sans-serif;
+}
+
+.legendTitle {
+    font-size: 12px;
+    font-weight: bold;
+    font-family: sans-serif;
+}
+
+.legend rect {
+    stroke: #999;
+    stroke-width: 0.5px;
+}
