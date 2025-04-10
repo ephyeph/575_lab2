@@ -97,6 +97,13 @@
     
     // Create the bar chart
     function setChart(data, colorScale){
+        
+        //test
+        console.log("Currently expressed:", expressed);
+            data.forEach(d => {
+                console.log(d.id, d[expressed], parseFloat(d[expressed]));
+            });
+
         var chartWidth = window.innerWidth * 0.425,
             chartHeight = 500,
             padding = 25,
