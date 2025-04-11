@@ -39,9 +39,10 @@
     
             d3.select("#attributeSelect")
                 .on("change", function() {
-                    expressed = this.value;
-                    updateVisuals(csvData);
-                });
+                expressed = this.value;
+                updateVisuals(csvData, geojsonData, map, path);
+    });
+
         });
     }
     
