@@ -1,58 +1,57 @@
 // Wrap entire script in a self-executing function
 (function(){
 
-    var attrArray = ["broadband", "speed", "freedom", "cost", "social"];
-    var expressed = attrArray[0];
+    // Global variables
+    const attrArray = [ "broadband_coverage", "internet_speed","freedom_score", "internet_cost_pct_income", "social_media_penetration"];
+    let expressed = attrArray[0];
     
     window.onload = setMap;
     
     function setMap(){
-        var width = window.innerWidth * 0.5,
-            height = 500;
+        const width = window.innerWidth * 0.5;
+        const height = 500;
     
-        var map = d3.select("body")
+        const map = d3.select("#map")
             .append("svg")
             .attr("class", "map")
             .attr("width", width)
             .attr("height", height);
     
-        var projection = d3.geoAlbers()
+        const projection = d3.geoAlbers()
             .center([20, 52])
             .rotate([-10, 0])
             .parallels([40, 65])
             .scale(700)
             .translate([width / 2, height / 2]);
     
-        var path = d3.geoPath().projection(projection);
+        const path = d3.geoPath().projection(projection);
     
-        var promises = [
+        Promise.all([
             d3.csv("data/europeInternetData.csv"),
             d3.json("data/europe.topojson")
-        ];
-    
-        Promise.all(promises).then(function(data){
-            var csvData = data[0],
-                europe = data[1];
-    
-            var geojsonData = topojson.feature(europe, europe.objects.europe).features;
-    
+        ]).then(([csvData, europe]) => {
+            const geojsonData = topojson.feature(europe, europe.objects.europe).features;
             joinData(geojsonData, csvData);
-            var colorScale = makeColorScale(csvData);
+            const colorScale = makeColorScale(csvData);
     
             drawMap(geojsonData, map, path, colorScale);
             setChart(csvData, colorScale);
-            createDropdown(csvData);
+    
+            d3.select("#attributeSelect")
+                .on("change", function() {
+                    expressed = this.value;
+                    updateVisuals(csvData);
+                });
         });
     }
     
     function joinData(geojsonData, csvData){
         csvData.forEach(csvCountry => {
-            var csvKey = csvCountry.id;
-    
-            geojsonData.forEach(geoFeature => {
-                if (geoFeature.properties.id === csvKey) {
+            const csvKey = csvCountry.id;
+            geojsonData.forEach(feature => {
+                if(feature.properties.id === csvKey){
                     attrArray.forEach(attr => {
-                        geoFeature.properties[attr] = parseFloat(csvCountry[attr]);
+                        feature.properties[attr] = parseFloat(csvCountry[attr]);
                     });
                 }
             });
@@ -60,12 +59,9 @@
     }
     
     function makeColorScale(data){
-        var colorClasses = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"];
-        var colorScale = d3.scaleQuantile().range(colorClasses);
-    
-        var domainArray = data.map(d => parseFloat(d[expressed]));
-        colorScale.domain(domainArray);
-    
+        const colorClasses = ["#edf8fb", "#b2e2e2", "#66c2a4", "#2ca25f", "#006d2c"];
+        const colorScale = d3.scaleQuantile().range(colorClasses);
+        colorScale.domain(data.map(d => parseFloat(d[expressed])));
         return colorScale;
     }
     
@@ -76,22 +72,19 @@
             .append("path")
             .attr("class", d => "country " + d.properties.id)
             .attr("d", path)
-            .style("fill", d => {
-                var val = d.properties[expressed];
-                return val ? colorScale(val) : "#ccc";
-            })
+            .style("fill", d => d.properties[expressed] ? colorScale(d.properties[expressed]) : "#ccc")
             .on("mouseover", highlight)
             .on("mouseout", dehighlight);
     }
     
     function setChart(data, colorScale){
-        var chartWidth = window.innerWidth * 0.425,
-            chartHeight = 500,
-            padding = 25,
-            innerWidth = chartWidth - padding * 2,
-            innerHeight = chartHeight - padding * 2;
+        const chartWidth = window.innerWidth * 0.425;
+        const chartHeight = 500;
+        const padding = 25;
+        const innerWidth = chartWidth - padding * 2;
+        const innerHeight = chartHeight - padding * 2;
     
-        var chart = d3.select("body")
+        const chart = d3.select("#barChart")
             .append("svg")
             .attr("class", "chart")
             .attr("width", chartWidth)
@@ -101,13 +94,13 @@
             .attr("class", "chartTitle")
             .attr("x", padding)
             .attr("y", 30)
-            .text("Internet " + capitalize(expressed) + " by Country");
+            .text("Internet " + expressed + " by Country");
     
-        var yScale = d3.scaleLinear()
+        const yScale = d3.scaleLinear()
             .range([innerHeight, 0])
             .domain([0, d3.max(data, d => parseFloat(d[expressed])) * 1.1]);
     
-        var xScale = d3.scaleBand()
+        const xScale = d3.scaleBand()
             .domain(data.map(d => d.id))
             .range([padding, chartWidth - padding])
             .padding(0.1);
@@ -120,11 +113,16 @@
             .attr("class", d => "bar " + d.id)
             .attr("width", xScale.bandwidth())
             .attr("x", d => xScale(d.id))
-            .attr("y", d => yScale(parseFloat(d[expressed])) + padding)
-            .attr("height", d => innerHeight - yScale(parseFloat(d[expressed])))
+            .attr("y", d => yScale(d[expressed]) + padding)
+            .attr("height", d => innerHeight - yScale(d[expressed]))
             .style("fill", d => colorScale(d[expressed]))
             .on("mouseover", highlight)
             .on("mouseout", dehighlight);
+    
+        chart.append("g")
+            .attr("class", "axis")
+            .attr("transform", `translate(${padding}, ${padding})`)
+            .call(d3.axisLeft(yScale));
     
         chart.append("g")
             .attr("class", "axis x-axis")
@@ -134,89 +132,57 @@
             .attr("transform", "rotate(-45)")
             .style("text-anchor", "end");
     
-        chart.append("g")
-            .attr("class", "axis")
-            .attr("transform", `translate(${padding}, ${padding})`)
-            .call(d3.axisLeft(yScale));
-    
-        drawLegend(colorScale, chartWidth);
-    }
-    
-    function drawLegend(colorScale, chartWidth){
-        var legend = d3.select("body")
-            .append("svg")
+        // Add legend
+        const legend = chart.append("g")
             .attr("class", "legend")
-            .attr("width", 150)
-            .attr("height", 60)
-            .style("position", "absolute")
-            .style("top", "20px")
-            .style("right", "30px");
+            .attr("transform", `translate(${chartWidth - 100}, 40)`);
     
         legend.append("text")
-            .attr("x", 0)
-            .attr("y", 15)
+            .attr("class", "legendTitle")
             .text("Legend");
     
-        var colors = colorScale.range();
-    
-        legend.append("rect").attr("x", 10).attr("y", 25).attr("width", 20).attr("height", 15).style("fill", colors[colors.length - 1]);
-        legend.append("text").attr("x", 35).attr("y", 37).text("High");
-    
-        legend.append("rect").attr("x", 80).attr("y", 25).attr("width", 20).attr("height", 15).style("fill", colors[0]);
-        legend.append("text").attr("x", 105).attr("y", 37).text("Low");
-    }
-    
-    function createDropdown(data){
-        var dropdown = d3.select("body")
-            .append("select")
-            .attr("class", "dropdown")
-            .on("change", function() {
-                expressed = this.value;
-                updateVisuals(data);
-            });
-    
-        dropdown.selectAll("option")
-            .data(attrArray)
-            .enter()
-            .append("option")
-            .attr("value", d => d)
-            .text(d => capitalize(d));
-    }
-    
-    function updateVisuals(data){
-        var colorScale = makeColorScale(data);
-    
-        d3.selectAll(".country")
-            .transition()
-            .duration(1000)
-            .style("fill", d => {
-                var val = d.properties[expressed];
-                return val ? colorScale(val) : "#ccc";
-            });
-    
-        d3.select(".chartTitle")
-            .text("Internet " + capitalize(expressed) + " by Country");
-    
-        d3.select(".legend").remove();
-        drawLegend(colorScale);
+        legend.append("rect").attr("x", 0).attr("y", 20).attr("width", 20).attr("height", 20).style("fill", "#006d2c");
+        legend.append("text").attr("x", 25).attr("y", 35).text("High");
+        legend.append("rect").attr("x", 0).attr("y", 45).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
+        legend.append("text").attr("x", 25).attr("y", 60).text("Low");
     }
     
     function highlight(event, d){
-        var id = d.id || d.properties.id;
+        const id = d.id || d.properties.id;
         d3.selectAll("." + id)
             .style("stroke", "#000")
             .style("stroke-width", "2px");
     }
     
     function dehighlight(event, d){
-        var id = d.id || d.properties.id;
+        const id = d.id || d.properties.id;
         d3.selectAll("." + id)
             .style("stroke", null)
             .style("stroke-width", null);
     }
     
-    function capitalize(str){
-        return str.charAt(0).toUpperCase() + str.slice(1);
+    function updateVisuals(data){
+        const colorScale = makeColorScale(data);
+    
+        d3.selectAll(".country")
+            .transition()
+            .duration(1000)
+            .style("fill", d => d.properties[expressed] ? colorScale(d.properties[expressed]) : "#ccc");
+    
+        const yScale = d3.scaleLinear()
+            .range([450, 0])
+            .domain([0, d3.max(data, d => parseFloat(d[expressed])) * 1.1]);
+    
+        d3.selectAll(".bar")
+            .sort((a, b) => b[expressed] - a[expressed])
+            .transition()
+            .duration(1000)
+            .attr("y", d => yScale(d[expressed]) + 25)
+            .attr("height", d => 450 - yScale(d[expressed]))
+            .style("fill", d => colorScale(d[expressed]));
+    
+        d3.select(".chartTitle")
+            .text("Internet " + expressed + " by Country");
     }
     
     })();

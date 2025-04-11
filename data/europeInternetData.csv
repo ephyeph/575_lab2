@@ -1,4 +1,4 @@
-id,name,broadband,speed,freedom,cost,social
+id,name,broadband_coverage,internet_speed,freedom_score,internet_cost_pct_income,social_media_penetration
 ALB,Albania,84,146,96,3.41,59
 AUT,Austria,99,136,99,0.6,87
 BEL,Belgium,71,43,96,1.51,84
