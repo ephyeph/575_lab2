@@ -131,18 +131,18 @@
         // Add legend
         const legend = chart.append("g")
             .attr("class", "legend")
-            .attr("transform", `translate(${chartWidth - 100}, 20)`);
+            .attr("transform", `translate(${chartWidth - 120}, 20)`);
     
         legend.append("text")
             .attr("class", "legendTitle")
             .text("Legend")
             .attr("x", 0)
-            .attr("y", 0);
+            .attr("y", -10);
     
         legend.append("rect").attr("x", 0).attr("y", 10).attr("width", 20).attr("height", 20).style("fill", "#006d2c");
-        legend.append("text").attr("x", 25).attr("y", 25).text("High");
-        legend.append("rect").attr("x", 0).attr("y", 35).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
-        legend.append("text").attr("x", 25).attr("y", 50).text("Low");
+        legend.append("text").attr("x", 25).attr("y", 15).text("High");
+        legend.append("rect").attr("x", 0).attr("y", 25).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
+        legend.append("text").attr("x", 25).attr("y", 40).text("Low");
     }
     
     function highlight(event, d){
