@@ -135,16 +135,18 @@
         // Add legend
         const legend = chart.append("g")
             .attr("class", "legend")
-            .attr("transform", `translate(${chartWidth - 100}, 40)`);
+            .attr("transform", `translate(20, 40)`);
     
         legend.append("text")
             .attr("class", "legendTitle")
-            .text("Legend");
+            .text("Legend")
+            .attr("x", 0)
+            .attr("y", -10);
     
-        legend.append("rect").attr("x", 0).attr("y", 20).attr("width", 20).attr("height", 20).style("fill", "#006d2c");
-        legend.append("text").attr("x", 25).attr("y", 35).text("High");
-        legend.append("rect").attr("x", 0).attr("y", 45).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
-        legend.append("text").attr("x", 25).attr("y", 60).text("Low");
+        legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 20).attr("height", 20).style("fill", "#006d2c");
+        legend.append("text").attr("x", 25).attr("y", 15).text("High");
+        legend.append("rect").attr("x", 0).attr("y", 25).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
+        legend.append("text").attr("x", 25).attr("y", 40).text("Low");
     }
     
     function highlight(event, d){
@@ -161,18 +163,21 @@
             .style("stroke-width", null);
     }
     
-    function updateVisuals(data){
-        const colorScale = makeColorScale(data);
+    function updateVisuals(csvData, geojsonData, map, path){
+        const colorScale = makeColorScale(csvData);
     
+        // Update map colors
         d3.selectAll(".country")
             .transition()
             .duration(1000)
             .style("fill", d => d.properties[expressed] ? colorScale(d.properties[expressed]) : "#ccc");
     
+        // Update chart scaling
         const yScale = d3.scaleLinear()
             .range([450, 0])
-            .domain([0, d3.max(data, d => parseFloat(d[expressed])) * 1.1]);
+            .domain([0, d3.max(csvData, d => parseFloat(d[expressed])) * 1.1]);
     
+        // Update bar chart
         d3.selectAll(".bar")
             .sort((a, b) => b[expressed] - a[expressed])
             .transition()
@@ -181,9 +186,11 @@
             .attr("height", d => 450 - yScale(d[expressed]))
             .style("fill", d => colorScale(d[expressed]));
     
+        // Update chart title
         d3.select(".chartTitle")
             .text("Internet " + expressed + " by Country");
     }
+    
     
     })();
     
