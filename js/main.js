@@ -48,9 +48,10 @@
     
     function joinData(geojsonData, csvData){
         csvData.forEach(csvCountry => {
-            const csvKey = csvCountry.id;
+            const csvKey = csvCountry.name;
             geojsonData.forEach(feature => {
-                if(feature.properties.id === csvKey){
+                const geoKey = feature.properties.NAME;
+                if(csvKey === geoKey){
                     attrArray.forEach(attr => {
                         feature.properties[attr] = parseFloat(csvCountry[attr]);
                     });
@@ -71,7 +72,7 @@
             .data(geojsonData)
             .enter()
             .append("path")
-            .attr("class", d => "country " + d.properties.id)
+            .attr("class", d => "country " + d.properties.NAME)
             .attr("d", path)
             .style("fill", d => d.properties[expressed] ? colorScale(d.properties[expressed]) : "#ccc")
             .on("mouseover", highlight)
@@ -91,15 +92,9 @@
             .attr("width", chartWidth)
             .attr("height", chartHeight);
     
-        chart.append("text")
-            .attr("class", "chartTitle")
-            .attr("x", padding)
-            .attr("y", 30)
-            .text("Internet " + expressed + " by Country");
-    
         const yScale = d3.scaleLinear()
             .range([innerHeight, 0])
-            .domain([0, d3.max(data, d => parseFloat(d[expressed])) * 1.1]);
+            .domain([0, 150]);
     
         const xScale = d3.scaleBand()
             .domain(data.map(d => d.id))
@@ -136,18 +131,18 @@
         // Add legend
         const legend = chart.append("g")
             .attr("class", "legend")
-            .attr("transform", `translate(20, 40)`);
+            .attr("transform", `translate(${chartWidth - 100}, 20)`);
     
         legend.append("text")
             .attr("class", "legendTitle")
             .text("Legend")
             .attr("x", 0)
-            .attr("y", -10);
+            .attr("y", 0);
     
-        legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 20).attr("height", 20).style("fill", "#006d2c");
-        legend.append("text").attr("x", 25).attr("y", 15).text("High");
-        legend.append("rect").attr("x", 0).attr("y", 25).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
-        legend.append("text").attr("x", 25).attr("y", 40).text("Low");
+        legend.append("rect").attr("x", 0).attr("y", 10).attr("width", 20).attr("height", 20).style("fill", "#006d2c");
+        legend.append("text").attr("x", 25).attr("y", 25).text("High");
+        legend.append("rect").attr("x", 0).attr("y", 35).attr("width", 20).attr("height", 20).style("fill", "#edf8fb");
+        legend.append("text").attr("x", 25).attr("y", 50).text("Low");
     }
     
     function highlight(event, d){
@@ -186,10 +181,6 @@
             .attr("y", d => yScale(d[expressed]) + 25)
             .attr("height", d => 450 - yScale(d[expressed]))
             .style("fill", d => colorScale(d[expressed]));
-    
-        // Update chart title
-        d3.select(".chartTitle")
-            .text("Internet " + expressed + " by Country");
     }
     
     
